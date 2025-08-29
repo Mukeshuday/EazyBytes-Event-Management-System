@@ -1,0 +1,18 @@
+/* Tell Tailwind to load */
+@import "tailwindcss";
+
+/* Optional: explicitly point to JS config if you want */
+@config "../tailwind.config.js";
+
+/* 👇 You can put custom global styles here */
+html, body {
+  height: 100%;
+  background-color: #f9fafb; /* light gray */
+}
+
+/* Example utility overrides */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
