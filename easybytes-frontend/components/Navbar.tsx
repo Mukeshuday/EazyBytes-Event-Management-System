@@ -21,9 +21,11 @@ export default function Navbar() {
 
   const handleLogout = () => {
     Cookies.remove("token");
+    localStorage.removeItem("token"); // ✅ triggers storage event
     console.log("✅ Logged out");
     router.push("/auth/login");
   };
+
 
   // ✅ Utility function for active link style
   const linkClasses = (path: string) =>

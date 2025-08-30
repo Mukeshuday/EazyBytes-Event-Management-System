@@ -1,11 +1,13 @@
 import { Router, Response } from "express";
-import { authMiddleware, AuthRequest } from "../middleware/authMiddleware.js";
+import { authMiddleware, AuthRequest, isAdmin } from "../middleware/authMiddleware.js";
 import { Event } from "../models/Event.js";
 
 const router = Router();
 
-// 📌 Create an Event (Admin/Organizer feature - for now anyone can)
-router.post("/", authMiddleware, async (req: AuthRequest, res: Response) => {
+/**
+ * 📌 Create Event (Admin only)
+ */
+router.post("/", authMiddleware, isAdmin, async (req: AuthRequest, res: Response) => {
   try {
     const { title, description, date, price } = req.body;
     const event = new Event({ title, description, date, price });
@@ -16,7 +18,9 @@ router.post("/", authMiddleware, async (req: AuthRequest, res: Response) => {
   }
 });
 
-// 📌 Get All Events
+/**
+ * 📌 Get All Events (Public)
+ */
 router.get("/", async (_, res: Response) => {
   try {
     const events = await Event.find().sort({ date: 1 });
@@ -26,7 +30,9 @@ router.get("/", async (_, res: Response) => {
   }
 });
 
-// 📌 Get Single Event
+/**
+ * 📌 Get Single Event (Public)
+ */
 router.get("/:id", async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
@@ -37,8 +43,10 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// 📌 Update Event
-router.put("/:id", authMiddleware, async (req: AuthRequest, res: Response) => {
+/**
+ * 📌 Update Event (Admin only)
+ */
+router.put("/:id", authMiddleware, isAdmin, async (req: AuthRequest, res: Response) => {
   try {
     const { title, description, date, price } = req.body;
     const event = await Event.findByIdAndUpdate(
@@ -53,8 +61,10 @@ router.put("/:id", authMiddleware, async (req: AuthRequest, res: Response) => {
   }
 });
 
-// 📌 Delete Event
-router.delete("/:id", authMiddleware, async (req: AuthRequest, res: Response) => {
+/**
+ * 📌 Delete Event (Admin only)
+ */
+router.delete("/:id", authMiddleware, isAdmin, async (req: AuthRequest, res: Response) => {
   try {
     const event = await Event.findByIdAndDelete(req.params.id);
     if (!event) return res.status(404).json({ message: "Event not found" });

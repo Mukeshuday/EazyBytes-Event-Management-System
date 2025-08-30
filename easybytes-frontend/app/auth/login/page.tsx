@@ -8,6 +8,7 @@ import Cookies from "js-cookie";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { handleApiError } from "@/lib/errorHandler";
+import toast from "react-hot-toast";
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
@@ -24,13 +25,13 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginInput) => {
     try {
       setLoading(true);
-      const res = await api.post("/auth/login", data);
+      const res = await api.post("http://localhost:3000/auth/login", data);
 
       Cookies.set("token", res.data.token, { expires: 1 });
-      alert("✅ Login successful!");
+      toast.success("✅ Login successful!");
       router.push("/events");
     } catch (err: unknown) {
-      alert("❌ Login failed: " + handleApiError(err));
+      toast.error("❌ Login failed: " + handleApiError(err));
     } finally {
       setLoading(false);
     }
@@ -54,7 +55,9 @@ export default function LoginPage() {
           {...register("password")}
           className="w-full border p-2 rounded"
         />
-        {errors.password && <p className="text-red-500">{errors.password.message}</p>}
+        {errors.password && (
+          <p className="text-red-500">{errors.password.message}</p>
+        )}
 
         <button
           type="submit"

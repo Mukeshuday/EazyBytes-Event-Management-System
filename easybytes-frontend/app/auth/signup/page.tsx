@@ -6,9 +6,13 @@ import { signupSchema, SignupInput } from "@/lib/validations/auth";
 import api from "@/lib/api";
 import { useState } from "react";
 import { handleApiError } from "@/lib/errorHandler";
+import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 export default function SignupPage() {
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
   const {
     register,
     handleSubmit,
@@ -20,11 +24,15 @@ export default function SignupPage() {
   const onSubmit = async (data: SignupInput) => {
     try {
       setLoading(true);
-      const res = await api.post("/auth/signup", data);
-      alert("✅ Signup successful! Now login.");
+      const res = await api.post("http://localhost:3000/auth/signup", data);
+
+      toast.success("✅ Signup successful! Please login.");
       console.log(res.data);
+
+      // redirect to login page
+      router.push("/auth/login");
     } catch (err: unknown) {
-      alert("❌ Signup failed: " + handleApiError(err));
+      toast.error("❌ Signup failed: " + handleApiError(err));
     } finally {
       setLoading(false);
     }
@@ -56,7 +64,9 @@ export default function SignupPage() {
           {...register("password")}
           className="w-full border p-2 rounded"
         />
-        {errors.password && <p className="text-red-500">{errors.password.message}</p>}
+        {errors.password && (
+          <p className="text-red-500">{errors.password.message}</p>
+        )}
 
         <button
           type="submit"

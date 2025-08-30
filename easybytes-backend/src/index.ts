@@ -10,6 +10,8 @@ import bookingRoutes from "./routes/bookingRoutes.js"
 import eventRoutes from "./routes/eventRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import testRoutes from "./routes/testRoutes.js";
+import userRoutes from "./routes/userRoutes.js"
+
 import { connectDB } from "./config/db.js";
 
 const app = express();
@@ -30,6 +32,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api", testRoutes);
 app.use("/api/events",eventRoutes);
 app.use("/api/bookings",bookingRoutes);
+app.use("/api/users",userRoutes)
 
 const PORT = process.env.PORT || 4000;
 

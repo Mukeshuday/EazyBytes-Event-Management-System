@@ -1,9 +1,22 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import User from "../models/User.js";
+import User, { IUser } from "../models/User.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "changeme-secret"; // fallback if env missing
+
+// ✅ Helper to generate JWT
+function generateToken(user: IUser) {
+  return jwt.sign(
+    {
+      id: user._id,
+      email: user.email,
+      role: user.role, // 👈 include role
+    },
+    JWT_SECRET,
+    { expiresIn: "1h" }
+  );
+}
 
 // 👉 Signup
 export const signup = async (req: Request, res: Response) => {
@@ -27,19 +40,16 @@ export const signup = async (req: Request, res: Response) => {
       name,
       email,
       password: hashedPassword,
+      role: "user", // 👈 default role
     });
 
     // generate JWT
-    const token = jwt.sign(
-      { userId: newUser._id, email: newUser.email },
-      JWT_SECRET,
-      { expiresIn: "1h" }
-    );
+    const token = generateToken(newUser);
 
     res.status(201).json({
       message: "User created successfully ✅",
-      user: { id: newUser._id, name: newUser.name, email: newUser.email },
-      token, // 👈 include token here
+      user: { id: newUser._id, name: newUser.name, email: newUser.email, role: newUser.role },
+      token,
     });
   } catch (error: any) {
     res.status(500).json({ message: "Signup failed ❌", error: error.message });
@@ -61,16 +71,12 @@ export const login = async (req: Request, res: Response) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
 
-    // JWT
-    const token = jwt.sign(
-      { userId: user._id, email: user.email },
-      JWT_SECRET,
-      { expiresIn: "1h" }
-    );
+    // generate JWT
+    const token = generateToken(user);
 
     res.json({
       message: "Login successful ✅",
-      user: { id: user._id, name: user.name, email: user.email },
+      user: { id: user._id, name: user.name, email: user.email, role: user.role },
       token,
     });
   } catch (error: any) {
