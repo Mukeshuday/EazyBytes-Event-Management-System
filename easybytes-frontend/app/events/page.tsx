@@ -6,11 +6,13 @@ import { Event } from "@/types/event";
 import type { AxiosError } from "axios";
 import toast from "react-hot-toast";
 import EventSkeleton from "@/components/ui/EventSkeleton";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
-export default function EventsPage() {
+ function EventsPageContent() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [booking, setBooking] = useState<string | null>(null);
+  const [bookedEvents, setBookedEvents] = useState<Set<string>>(new Set()); 
 
   // ✅ Fetch events
   useEffect(() => {
@@ -30,6 +32,7 @@ export default function EventsPage() {
       setBooking(eventId);
       const res = await api.post(`/bookings/${eventId}`);
       toast.success(res.data.message || "✅ Booking successful!");
+      setBookedEvents(prev => new Set(prev).add(eventId));
     } catch (err) {
       const axiosErr = err as AxiosError<{ message: string }>;
       toast.error(axiosErr.response?.data?.message || "❌ Booking failed");
@@ -69,17 +72,34 @@ export default function EventsPage() {
               </p>
               <p className="font-bold mt-1">₹ {event.price}</p>
 
-              <button
-                onClick={() => handleBooking(event._id)}
-                disabled={booking === event._id}
-                className="mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-              >
-                {booking === event._id ? "Booking..." : "Book Now"}
-              </button>
+            <button
+              onClick={() => handleBooking(event._id)}
+              disabled={booking === event._id || bookedEvents.has(event._id)}
+              className={`mt-2 px-4 py-2 rounded text-white ${
+                bookedEvents.has(event._id)
+                  ? "bg-gray-500 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700"
+              }`}
+            >
+              {bookedEvents.has(event._id)
+                ? "Booked ✅"
+                : booking === event._id
+                ? "Booking..."
+                : "Book Now"}
+            </button>
+
             </li>
           ))}
         </ul>
       )}
     </div>
+  );
+}
+
+export default function EventsPage() {
+  return (
+    <ProtectedRoute>
+      <EventsPageContent />
+    </ProtectedRoute>
   );
 }

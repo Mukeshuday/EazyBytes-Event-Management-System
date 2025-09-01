@@ -6,6 +6,7 @@ export interface Booking {
   user: Pick<User, "_id" | "name" | "email">; // ✅ reuse User type if you add one
   event: Event;
   createdAt: string;
+  isPaid?: boolean;
 }
 
 // (Optional) If we add a User type for reuse

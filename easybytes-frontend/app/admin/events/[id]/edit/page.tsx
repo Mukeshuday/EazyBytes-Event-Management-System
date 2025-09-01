@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import EventForm from "@/components/admin/EventForm";
+import EventSkeleton from "@/components/ui/EventSkeleton";
 import api from "@/lib/api";
 import { Event } from "@/types/event";
 import toast from "react-hot-toast";
@@ -23,8 +24,21 @@ export default function EditEventPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  if (loading) return <p className="p-6">Loading...</p>;
-  if (!event) return <p className="p-6 text-red-500">Event not found ❌</p>;
+  if (loading) {
+    return (
+      <ProtectedRoute adminOnly>
+        <div className="p-6 space-y-4">
+          <EventSkeleton />
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
+  if (!event) {
+    return (
+      <p className="p-6 text-red-500">Event not found ❌</p>
+    );
+  }
 
   return (
     <ProtectedRoute adminOnly>

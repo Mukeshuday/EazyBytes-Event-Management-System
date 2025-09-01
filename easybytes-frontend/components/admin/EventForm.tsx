@@ -1,21 +1,31 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { Resolver } from "react-hook-form";
 import toast from "react-hot-toast";
 import api from "@/lib/api";
 import { Event } from "@/types/event";
 
-// ✅ Schema with Zod
+/**
+ * Schema
+ * - We use z.preprocess to convert incoming form values (strings) to number safely.
+ * - No `invalid_type_error` options here to avoid the TS issue.
+ */
 const eventSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
   description: z.string().min(10, "Description must be at least 10 characters"),
-  date: z.string().nonempty("Date is required"),
-  price: z
-    .number({ invalid_type_error: "Price must be a number" })
-    .min(1, "Price must be at least 1"),
+  date: z.string().min(1, "Date is required"),
+  price: z.preprocess((val) => {
+    // handle empty string or number or string number
+    if (val === "" || val === undefined || val === null) return NaN;
+    if (typeof val === "string") return Number(val);
+    if (typeof val === "number") return val;
+    return NaN;
+  }, z.number().min(1, "Price must be at least 1")),
 });
 
 type EventFormData = z.infer<typeof eventSchema>;
@@ -28,41 +38,54 @@ interface EventFormProps {
 export default function EventForm({ event, isEdit }: EventFormProps) {
   const router = useRouter();
 
+  // Cast resolver to the exact resolver type expected by useForm to avoid the Resolver mismatch
+  const typedResolver = zodResolver(eventSchema) as unknown as Resolver<EventFormData>;
+
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-    setValue,
+    reset,
   } = useForm<EventFormData>({
-    resolver: zodResolver(eventSchema),
+    resolver: typedResolver,
     defaultValues: {
-      title: event?.title || "",
-      description: event?.description || "",
+      title: event?.title ?? "",
+      description: event?.description ?? "",
       date: event ? new Date(event.date).toISOString().slice(0, 16) : "",
-      price: event?.price || 0,
+      price: (event?.price ?? 0) as number,
     },
   });
 
-  // ✅ Ensure default values update on edit
-  if (event) {
-    setValue("title", event.title);
-    setValue("description", event.description);
-    setValue("date", new Date(event.date).toISOString().slice(0, 16));
-    setValue("price", event.price);
-  }
+  // When editing, reset form with loaded event values (ensures proper types)
+  useEffect(() => {
+    if (event) {
+      reset({
+        title: event.title,
+        description: event.description,
+        date: new Date(event.date).toISOString().slice(0, 16),
+        price: event.price,
+      });
+    }
+  }, [event, reset]);
 
-  // ✅ Submit handler
   const onSubmit = async (data: EventFormData) => {
     try {
+      // Normalize date -> ISO for backend
+      const payload = {
+        ...data,
+        date: new Date(data.date).toISOString(),
+      };
+
       if (isEdit && event) {
-        await api.put(`/events/${event._id}`, data);
+        await api.put(`/events/${event._id}`, payload);
         toast.success("✅ Event updated");
       } else {
-        await api.post("/events", data);
+        await api.post("/events", payload);
         toast.success("✅ Event created");
       }
       router.push("/admin");
-    } catch {
+    } catch (err) {
+      console.error(err);
       toast.error("❌ Failed to save event");
     }
   };
@@ -124,6 +147,7 @@ export default function EventForm({ event, isEdit }: EventFormProps) {
         <label className="block font-medium mb-1">Price (₹)</label>
         <input
           type="number"
+          step="1"
           {...register("price", { valueAsNumber: true })}
           className="w-full border rounded px-3 py-2"
         />
@@ -137,11 +161,7 @@ export default function EventForm({ event, isEdit }: EventFormProps) {
         disabled={isSubmitting}
         className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
       >
-        {isSubmitting
-          ? "Saving..."
-          : isEdit
-          ? "Update Event"
-          : "Create Event"}
+        {isSubmitting ? "Saving..." : isEdit ? "Update Event" : "Create Event"}
       </button>
     </form>
   );

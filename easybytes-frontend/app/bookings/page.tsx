@@ -43,6 +43,22 @@ function BookingsPageContent() {
     }
   };
 
+  // ✅ Pay for booking
+  const handlePay = async (bookingId: string) => {
+    try {
+      const res = await api.post(`/payments/${bookingId}/pay`);
+      toast.success(res.data.message || "✅ Payment successful");
+
+      // mark as paid in UI
+      setBookings((prev) =>
+        prev.map((b) => (b._id === bookingId ? { ...b, isPaid: true } : b))
+      );
+    } catch (err) {
+      const axiosErr = err as AxiosError<{ message: string }>;
+      toast.error(axiosErr.response?.data?.message || "❌ Payment failed");
+    }
+  };
+
   // ✅ Shimmer skeleton while loading
   if (loading) {
     return (
@@ -56,39 +72,50 @@ function BookingsPageContent() {
   }
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">📋 My Bookings</h1>
+  <div className="p-6">
+    <h1 className="text-2xl font-bold mb-4">📋 My Bookings</h1>
 
-      {bookings.length === 0 ? (
-        <p className="text-gray-500">You don’t have any bookings yet.</p>
-      ) : (
-        <ul className="space-y-4">
-          {bookings.map((booking) => (
-            <li
-              key={booking._id}
-              className="p-4 border rounded-lg shadow-sm hover:shadow-md transition"
+    {bookings.length === 0 ? (
+      <p className="text-gray-500">You don’t have any bookings yet.</p>
+    ) : (
+      <ul className="space-y-4">
+        {bookings.map((booking) => (
+          <li
+            key={booking._id}
+            className="p-4 border rounded-lg shadow-sm hover:shadow-md transition"
+          >
+            <h2 className="font-semibold text-lg">{booking.event.title}</h2>
+            <p>{booking.event.description}</p>
+            <p className="text-sm text-gray-500">
+              {new Date(booking.event.date).toLocaleString()}
+            </p>
+            <p className="font-bold mt-1">₹ {booking.event.price}</p>
+
+            {/* Cancel Booking button */}
+            <button
+              onClick={() => handleCancel(booking._id)}
+              disabled={cancelling === booking._id}
+              className="mt-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 disabled:opacity-50"
             >
-              <h2 className="font-semibold text-lg">{booking.event.title}</h2>
-              <p>{booking.event.description}</p>
-              <p className="text-sm text-gray-500">
-                {new Date(booking.event.date).toLocaleString()}
-              </p>
-              <p className="font-bold mt-1">₹ {booking.event.price}</p>
+              {cancelling === booking._id ? "Cancelling..." : "Cancel Booking"}
+            </button>
 
+            {/* Payment Section */}
+            {booking.isPaid ? (
+              <p className="mt-2 text-green-600 font-medium">✅ Paid</p>
+            ) : (
               <button
-                onClick={() => handleCancel(booking._id)}
-                disabled={cancelling === booking._id}
-                className="mt-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 disabled:opacity-50"
+                onClick={() => handlePay(booking._id)}
+                className="mt-2 ml-2 bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
               >
-                {cancelling === booking._id
-                  ? "Cancelling..."
-                  : "Cancel Booking"}
+                Pay Now
               </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+            )}
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
   );
 }
 
