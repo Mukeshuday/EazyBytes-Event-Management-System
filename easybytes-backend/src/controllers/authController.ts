@@ -61,12 +61,19 @@ export const login = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
 
+    // 🚨 Debug logs (remove later)
+    console.log("📩 Login Request Body:", req.body);
+
     if (!email || !password) {
       return res.status(400).json({ message: "Email and password required" });
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select("+password");
     if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (!user.password) {
+      return res.status(500).json({ message: "User has no password set ❌" });
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
@@ -80,6 +87,7 @@ export const login = async (req: Request, res: Response) => {
       token,
     });
   } catch (error: any) {
+    console.error("🔥 Login Error:", error);
     res.status(500).json({ message: "Login failed ❌", error: error.message });
   }
 };

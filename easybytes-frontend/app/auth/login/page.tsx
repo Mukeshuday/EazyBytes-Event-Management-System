@@ -25,7 +25,7 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginInput) => {
     try {
       setLoading(true);
-      const res = await api.post("http://localhost:3000/auth/login", data);
+      const res = await api.post("/auth/login", data);
 
       Cookies.set("token", res.data.token, { expires: 1 });
       toast.success("✅ Login successful!");

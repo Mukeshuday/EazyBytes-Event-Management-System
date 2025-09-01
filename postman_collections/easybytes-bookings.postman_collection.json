@@ -1,8 +1,8 @@
 {
   "info": {
-    "name": "EasyBytes - Bookings CRUD",
-    "_postman_id": "eazybytes-bookings-crud",
-    "description": "Test CRUD operations for Booking API",
+    "name": "EasyBytes - Full API Testing",
+    "_postman_id": "eazybytes-full-crud",
+    "description": "Test Auth, Events, Bookings, Users, and Payments API",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -31,7 +31,7 @@
       }
     },
     {
-      "name": "Create Event",
+      "name": "Create Event (Admin only)",
       "request": {
         "method": "POST",
         "header": [
@@ -46,12 +46,24 @@
       }
     },
     {
+      "name": "Get All Events",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "http://localhost:4000/api/events", "protocol": "http", "host": ["localhost"], "port": "4000", "path": ["api", "events"] }
+      }
+    },
+    {
+      "name": "Get Event By ID",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "http://localhost:4000/api/events/{{eventId}}", "protocol": "http", "host": ["localhost"], "port": "4000", "path": ["api", "events", "{{eventId}}"] }
+      }
+    },
+    {
       "name": "Create Booking",
       "request": {
         "method": "POST",
-        "header": [
-          { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
-        ],
+        "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
         "url": { "raw": "http://localhost:4000/api/bookings/{{eventId}}", "protocol": "http", "host": ["localhost"], "port": "4000", "path": ["api", "bookings", "{{eventId}}"] }
       }
     },
@@ -59,9 +71,7 @@
       "name": "Get All My Bookings",
       "request": {
         "method": "GET",
-        "header": [
-          { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
-        ],
+        "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
         "url": { "raw": "http://localhost:4000/api/bookings", "protocol": "http", "host": ["localhost"], "port": "4000", "path": ["api", "bookings"] }
       }
     },
@@ -69,10 +79,39 @@
       "name": "Cancel Booking",
       "request": {
         "method": "DELETE",
+        "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+        "url": { "raw": "http://localhost:4000/api/bookings/{{bookingId}}", "protocol": "http", "host": ["localhost"], "port": "4000", "path": ["api", "bookings", "{{bookingId}}"] }
+      }
+    },
+    {
+      "name": "Make Payment",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+        "url": { "raw": "http://localhost:4000/api/payments/{{bookingId}}/pay", "protocol": "http", "host": ["localhost"], "port": "4000", "path": ["api", "payments", "{{bookingId}}", "pay"] }
+      }
+    },
+    {
+      "name": "Get Profile",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+        "url": { "raw": "http://localhost:4000/api/users/me", "protocol": "http", "host": ["localhost"], "port": "4000", "path": ["api", "users", "me"] }
+      }
+    },
+    {
+      "name": "Update Profile",
+      "request": {
+        "method": "PUT",
         "header": [
+          { "key": "Content-Type", "value": "application/json" },
           { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
         ],
-        "url": { "raw": "http://localhost:4000/api/bookings/{{bookingId}}", "protocol": "http", "host": ["localhost"], "port": "4000", "path": ["api", "bookings", "{{bookingId}}"] }
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"TestUser Updated\"\n}"
+        },
+        "url": { "raw": "http://localhost:4000/api/users/me", "protocol": "http", "host": ["localhost"], "port": "4000", "path": ["api", "users", "me"] }
       }
     }
   ],

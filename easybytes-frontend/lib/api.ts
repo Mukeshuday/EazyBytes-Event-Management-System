@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig, AxiosError } from "axios";
+import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import Cookies from "js-cookie";
 
 // ✅ Base Axios instance
@@ -7,13 +7,13 @@ const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials: true, // send cookies if backend uses them
+  withCredentials: true,
 });
 
 // ✅ Attach token if available
-api.interceptors.request.use((config: AxiosRequestConfig) => {
+api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token = Cookies.get("token"); // JWT stored in cookie
-  if (token && config.headers) {
+  if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
@@ -25,9 +25,8 @@ api.interceptors.response.use(
   (error: AxiosError) => {
     if (error.response?.status === 401) {
       console.warn("⚠️ Unauthorized, token may be expired.");
-      // 👉 Optional: auto logout or redirect
       Cookies.remove("token");
-      // window.location.href = "/login"; // Uncomment if needed
+      // window.location.href = "/login"; // Optional auto redirect
     }
     return Promise.reject(error);
   }
