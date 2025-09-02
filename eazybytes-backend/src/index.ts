@@ -21,20 +21,36 @@ const app = express();
 // 🔑 Debugging line - shows if MONGO_URI is loaded
 console.log("🔑 MONGO_URI:", process.env.MONGO_URI);
 
+// Middlewares
 app.use(helmet());
 app.use(morgan("dev"));
 app.use(express.json());
 
-// ✅ Proper CORS setup
+// ✅ Flexible CORS setup
+const allowedOrigins = [
+  process.env.FRONTEND_URL || "http://localhost:3000",
+];
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:3000", // frontend
-    credentials: true, // allow cookies & Authorization headers
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true); // allow non-browser tools (like Postman)
+      if (
+        allowedOrigins.includes(origin) ||
+        /\.vercel\.app$/.test(origin) // ✅ allow any vercel.app preview
+      ) {
+        return callback(null, true);
+      }
+      console.warn("❌ CORS blocked request from:", origin);
+      return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
+// Health check
 app.get("/api/health", (_, res) => {
   res.json({ status: "ok", service: "easybytes-backend" });
 });
